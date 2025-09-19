@@ -1,0 +1,130 @@
+import { URLSearchParams } from "url";
+import { TokenRequest } from "../Models/auth";
+import fs from 'fs';
+import crypto from 'crypto';
+class AuthService  {
+    private readonly _authUURL: string = process.env.AUTH_SERVICE || '';
+    public async GetToken(req: TokenRequest): Promise<any> {
+        try {
+            
+            const body: any = {...req}
+            const params =  new URLSearchParams(body);
+            const creds =  `${process.env.AUTH_ADMIN}:${process.env.AUTH_ADMIN_PASSWD}`;
+            const b64Creds =  Buffer.from(creds).toString("base64"); 
+            console.log(this._authUURL)
+            const res =  await fetch(`${this._authUURL}/api/token`, {
+                body: params,
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Authorization": `Basic ${b64Creds}`
+                }
+            });
+
+            if(!res.ok) {
+                throw new Error("Could not get token");
+            }
+
+            const data =  await res.json();
+            return data;
+
+        } catch(ex) {
+            throw ex;
+        }
+        
+    }
+
+
+    public async RefreshToken(refreshdata: any): Promise<any> {
+        try {
+            const cookiename = 'refresh_session_cookie';
+            const cookievalue =  refreshdata.token;
+            const cookie =  `${cookiename}=${cookievalue}`;
+            const params_data:any = {
+                grant_type: 'refresh_token',
+                sessionid: refreshdata.sessionid,
+                client_id: process.env.AUTH_CLIENT_ID
+            }
+            const params = new URLSearchParams(params_data);
+            const creds =  `${process.env.AUTH_ADMIN}:${process.env.AUTH_ADMIN_PASSWD}`;
+            const b64Creds =  Buffer.from(creds).toString("base64"); 
+            const res = await fetch(`${this._authUURL}/api/token/refresh`, {
+                body: params,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    "Authorization": `Basic ${b64Creds}`,
+                    "Cookie": cookie
+                }
+            });
+            if(!res.ok) {
+                throw new Error("Something went wrong")
+            } 
+            
+            const data = await res.json();
+            return data;
+
+        } catch(ex) {
+            throw ex;
+        }
+
+    }
+
+
+    public async Logout(data: any) {
+        try {
+            const cookiename = 'refresh_session_cookie';
+            const cookievalue =  data.token;
+            data.client_id =  process.env.AUTH_CLIENT_ID;
+            const cookie =  `${cookiename}=${cookievalue}`;
+            const params =  new URLSearchParams({...data});
+            console.log(data);
+            const res = await fetch(`${this._authUURL}/api/authorize/logout`, {
+                method: 'POST',
+                body: params,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    "Cookie": cookie
+                }
+            });
+            if(res.redirected) {
+                return {type: "redirect", url: res.url};
+            } else {
+               const ret = await res.json();
+               return ret;
+            }
+        } catch (ex) {
+            throw ex;
+        }
+    }
+
+    public  VerifyToken = (jwt: any) => {
+            const pub_key_file: string =  process.env.PUBLIC_KEY || '';
+            const pub_key =  fs.readFileSync(pub_key_file);
+            const parts = jwt.split('.');
+            if(parts.length !== 3) {
+                throw new Error("Invalid JWT format");
+            }
+            
+            const [enc_header, enc_payload, enc_signature] =  parts;
+            const enc_data = `${enc_header}.${enc_payload}`;
+            const sigbuffer = Buffer.from(enc_signature, 'base64');
+            const verifier =  crypto.createVerify('RSA-SHA256');
+            verifier.update(enc_data);
+            const verified =  verifier.verify(pub_key, sigbuffer);
+    
+            if(verified) {
+                const pload = JSON.parse(Buffer.from(enc_payload, 'base64').toString('utf-8'));
+                const now =  Math.floor(Date.now() / 1000) 
+                if(pload.exp && pload.exp < now) {
+                    console.log('expired');
+                    throw new Error('Token has expired');
+                }
+                return pload;
+            } else {
+                throw new Error("Invalid token");
+            }
+        }
+}
+
+export default AuthService;
