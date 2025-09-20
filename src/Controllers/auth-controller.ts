@@ -45,6 +45,26 @@ class AuthController {
         
         }
     }
+
+    public async UserInfoGet(req: any) {
+        try {
+            const res =  await this._auth.UserInfoGet(req);
+            return {body: res, statusCode: 200}
+
+        } catch(ex: any) {
+            throw ex;
+        }
+    }
+
+      public async UserInfoPost(req: any) {
+        try {
+            const res =  await this._auth.UserInfoPost(req);
+            return {body: res, statusCode: 200}
+
+        } catch(ex: any) {
+            throw ex;
+        }
+    }
     
 
 }

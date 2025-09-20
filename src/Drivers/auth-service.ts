@@ -78,7 +78,7 @@ class AuthService  {
             data.client_id =  process.env.AUTH_CLIENT_ID;
             const cookie =  `${cookiename}=${cookievalue}`;
             const params =  new URLSearchParams({...data});
-            console.log(data);
+            
             const res = await fetch(`${this._authUURL}/api/authorize/logout`, {
                 method: 'POST',
                 body: params,
@@ -125,6 +125,54 @@ class AuthService  {
                 throw new Error("Invalid token");
             }
         }
+
+    public async UserUnfoGet(data: any) {
+        try {
+            const cookiename = 'refresh_session_cookie';
+            const cookievalue =  data.token;
+            const cookie =  `${cookiename}=${cookievalue}`;
+            const res = await fetch(`${this._authUURL}/api/userinfo/`+data.userid, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Cookie": cookie,
+                    "Authorization": `Bearer ${data.access_token}`
+                }
+            });
+            if(!res.ok) {
+                throw new Error("Oops something went wrong "+res.status);
+            }
+            return await res.json();
+
+        } catch(ex) {
+            throw ex;
+        }
+    }
+
+
+    public async UserUnfoPost(data: any) {
+        try {
+            const cookiename = 'refresh_session_cookie';
+            const cookievalue =  data.token;
+            const cookie =  `${cookiename}=${cookievalue}`;
+            const res = await fetch(`${this._authUURL}/api/userinfo`, {
+                method: 'POST',
+                body: JSON.stringify({userid: data.userid}),
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Cookie": cookie,
+                    "Authorization": `Bearer ${data.access_token}`
+                }
+            });
+            if(!res.ok) {
+                throw new Error("Oops something went wrong "+res.status);
+            }
+            return await res.json();
+
+        } catch(ex) {
+            console.log(ex);
+            throw ex;
+        }
+    }
 }
 
 export default AuthService;

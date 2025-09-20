@@ -103,6 +103,43 @@ class Auth {
             throw ex;
         }
     }
+
+    public async UserInfoGet(req: any) {
+        try {
+            const userid =  req.params.userid;
+            const creds =  req.credentials;
+            const token =  req.cookies.refresh_session_cookie;
+            let access_token;
+            if(creds) {
+                const cp =  creds.split(' ');
+                access_token = cp.length === 2 ?  cp[1] : '';
+            }
+            const res = await this._authservice.UserUnfoGet({userid, token, access_token});
+            return res;
+        } catch(ex) {
+            console.log(ex);
+            throw ex;
+        }
+    }
+
+
+       public async UserInfoPost(req: any) {
+        try {
+            const userid =  req.data.userid;
+            const creds =  req.credentials;
+            const token =  req.cookies.refresh_session_cookie;
+            let access_token;
+            if(creds) {
+                const cp =  creds.split(' ');
+                access_token = cp.length === 2 ?  cp[1] : '';
+            }
+            const res = await this._authservice.UserUnfoPost({userid, token, access_token});
+            return res;
+        } catch(ex) {
+            console.log(ex);
+            throw ex;
+        }
+    }
 }
 
 export default Auth;
