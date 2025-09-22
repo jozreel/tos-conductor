@@ -1,4 +1,4 @@
-import Session from "../Entities/sesson";
+import Session from "../Models/sesson";
 import DbDriver from "./db-drives";
 
 class SessionDb extends DbDriver {

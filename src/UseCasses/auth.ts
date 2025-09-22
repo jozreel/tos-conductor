@@ -1,6 +1,6 @@
 import SessionDb from "../Db/sessiondb";
 import AuthService from "../Drivers/auth-service";
-import Session from "../Entities/sesson";
+import Session from "../Models/sesson";
 
 class Auth {
     private _authservice: AuthService;
