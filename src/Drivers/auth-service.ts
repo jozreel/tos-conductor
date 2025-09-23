@@ -173,6 +173,28 @@ class AuthService  {
             throw ex;
         }
     }
+
+    public async AddUser(usr: any, token: string): Promise<any> {
+        try {
+            const res =  await fetch(`${this._authUURL}/api/user`, {
+                method: 'POST',
+                body: JSON.stringify(usr),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if(!res.ok) {
+                throw new Error("Oops something went wrong");
+            }
+
+            const dt = await res.json();
+            return dt;
+
+        } catch (ex) {
+            throw ex;
+        }
+    }
 }
 
 export default AuthService;

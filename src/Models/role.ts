@@ -68,4 +68,4 @@ class Role extends BaseModel {
     
 }
 
-module.exports = Role;
+export default Role;

@@ -1,14 +1,15 @@
 import BaseModel from "./base-mopde";
 import { FieldLengthError, FieldValueError } from "../errors";
+import Role from "./role";
 
 class User extends BaseModel {
     private userid: string;
     private username: string;
-    private role: string;
+    private roles: Role[];
     private readonly userid_length: number =  64;
     private readonly username_length: number = 20;
     private readonly role_length:number =  64;
-    public constructor(userid: string, created: Date, lasemodified: Date, createdby: string, lastmodby: string, username='', role="",) {
+    public constructor(userid: string, created: Date, lasemodified: Date, createdby: string, lastmodby: string, username='', roles:Role[]=[],) {
         super(created, lasemodified, createdby, lastmodby);
         if(!userid) {
             throw new FieldValueError("userid is required");
@@ -19,12 +20,10 @@ class User extends BaseModel {
         if(username && username.length > this.username_length) {
             throw new FieldLengthError(`Username has a mx length od ${this.username_length}`)
         }
-        if(role && role.length > this.role_length) {
-            throw new FieldLengthError(`Role has a max length of ${this.role_length}`);
-        }
+        
         this.userid =  userid;
         this.username =  username;
-        this.role =  role;
+        this.roles =  roles;
     }
 
     public get UserId(): string {
@@ -43,12 +42,12 @@ class User extends BaseModel {
         this.username = this.username;
     }
 
-    public get Role(): string {
-        return this.role;
+    public get Roles(): Role[] {
+        return this.roles;
     }
 
-    public set Role(role: string) {
-        this.role = role;
+    public set Roles(roles: Role[]) {
+        this.roles = roles;
     }
 }
 
