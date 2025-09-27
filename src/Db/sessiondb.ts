@@ -1,11 +1,11 @@
-import Session from "../Models/sesson";
+import Session from "../Models/session";
 import DbDriver from "./db-drives";
 
 class SessionDb extends DbDriver {
     private readonly collection: string =  'sessions';
     public async AddSession(data: Session) {
         try {
-            await this.DeleteSessionsForUSer(data.UserId);
+            await this.DeleteSessionsForUser(data.UserId);
             const ins =  await this.db.collection(this.collection).insertOne({
                 sessionid: data.SessionId,
                 token: data.Token,
@@ -21,7 +21,7 @@ class SessionDb extends DbDriver {
         }
     }
 
-    public async DeleteSessionsForUSer(userid: string) {
+    public async DeleteSessionsForUser(userid: string) {
         try {
             const res =  await this.db.collection(this.collection).deleteMany({userid})
             if(res.deletedCount >0 ) {
@@ -43,6 +43,29 @@ class SessionDb extends DbDriver {
         } catch(ex) {
             throw ex;
         }
+    }
+
+    public async GetSessionForUser(uid: string): Promise<Session|undefined> {
+        try {
+            let _id =  this.ID(uid);
+            const res =  await this.db.collection(this.collection).findOne({_id});
+            if(res) {
+               return new Session(res._id.toString(), res.token, res.userid, res.createddate, res.lastmodifieddate, res.createdby, res.lastmodifiedby);
+
+            }
+
+        } catch(ex) {
+            throw ex;
+        }
+    }
+
+    public async UpdateSession(data: Session) {
+        try {
+
+        } catch(ex) {
+            throw ex;
+        }
+
     }
 }
 

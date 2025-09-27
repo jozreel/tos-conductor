@@ -75,6 +75,12 @@ class AccessDeniedError extends AppError{
     }
 }
 
+class TokenExpiredError extends AppError {
+    constructor(...params: any) {
+        super(1008, "TokenExpiredError", ...params);
+    }
+}
+
 
 
 
@@ -86,5 +92,6 @@ export {AppError,
       DatabaseConnectionError,
       DuplicateRecordError,
       RecordNotFoundError,
-      AccessDeniedError
+      AccessDeniedError,
+      TokenExpiredError
     }

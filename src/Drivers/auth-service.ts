@@ -2,6 +2,7 @@ import { URLSearchParams } from "url";
 import { TokenRequest } from "../Models/auth";
 import fs from 'fs';
 import crypto from 'crypto';
+import { TokenExpiredError } from "../errors";
 class AuthService  {
     private readonly _authUURL: string = process.env.AUTH_SERVICE || '';
     public async GetToken(req: TokenRequest): Promise<any> {
@@ -9,7 +10,8 @@ class AuthService  {
             
             const body: any = {...req}
             const params =  new URLSearchParams(body);
-            const creds =  `${process.env.AUTH_ADMIN}:${process.env.AUTH_ADMIN_PASSWD}`;
+            params.append("grant_type", "authorization_code");
+            const creds =  `${process.env.AUTH_CLIENT_ID}:${process.env.CLIENT_SECRET}`;
             const b64Creds =  Buffer.from(creds).toString("base64"); 
             console.log(this._authUURL)
             const res =  await fetch(`${this._authUURL}/api/token`, {
@@ -34,6 +36,32 @@ class AuthService  {
         
     }
 
+    
+    public async GetServiceAccountToken(req:TokenRequest): Promise<any> {
+        try {
+            const params =  new URLSearchParams(req);
+            params.append('grant_type', "client_credentials");
+            const creds =  `${process.env.AUTH_CLIENT_ID}:${process.env.CLIENT_SECRET}`;
+            const b64Creds =  Buffer.from(creds).toString("base64");
+            const res =  await fetch(`${this._authUURL}/api/token`, {
+                body: params,
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Authorization": `Basic ${b64Creds}`
+                }
+            });
+            if(!res.ok) {
+                throw new Error("Could not get token");
+            }
+            const data =  await res.json();
+            return data;
+
+        } catch (ex: any) {
+
+        }
+    }
+
 
     public async RefreshToken(refreshdata: any): Promise<any> {
         try {
@@ -46,9 +74,9 @@ class AuthService  {
                 client_id: process.env.AUTH_CLIENT_ID
             }
             const params = new URLSearchParams(params_data);
-            const creds =  `${process.env.AUTH_ADMIN}:${process.env.AUTH_ADMIN_PASSWD}`;
+            const creds =  `${process.env.AUTH_CLIENT_ID}:${process.env.CLIENT_SECRET}`;
             const b64Creds =  Buffer.from(creds).toString("base64"); 
-            const res = await fetch(`${this._authUURL}/api/token/refresh`, {
+            const res = await fetch(`${this._authUURL}/api/token`, {
                 body: params,
                 method: 'POST',
                 headers: {
@@ -118,7 +146,7 @@ class AuthService  {
                 const now =  Math.floor(Date.now() / 1000) 
                 if(pload.exp && pload.exp < now) {
                     console.log('expired');
-                    throw new Error('Token has expired');
+                    throw new TokenExpiredError('Token has expired');
                 }
                 return pload;
             } else {
@@ -176,6 +204,8 @@ class AuthService  {
 
     public async AddUser(usr: any, token: string): Promise<any> {
         try {
+
+            //add user through back channel
             const res =  await fetch(`${this._authUURL}/api/user`, {
                 method: 'POST',
                 body: JSON.stringify(usr),
