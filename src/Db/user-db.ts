@@ -112,6 +112,7 @@ class UserDb extends DbDriver {
                     usr.createdby,
                     usr.modifiedby,
                     usr.username,
+                    '',
                     u_roles
                 );
 

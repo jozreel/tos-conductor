@@ -39,7 +39,9 @@ class AuthService  {
     
     public async GetServiceAccountToken(req:TokenRequest): Promise<any> {
         try {
-            const params =  new URLSearchParams(req);
+           
+            const pdata: any  = {...req};
+            const params =  new URLSearchParams(pdata);
             params.append('grant_type', "client_credentials");
             const creds =  `${process.env.AUTH_CLIENT_ID}:${process.env.CLIENT_SECRET}`;
             const b64Creds =  Buffer.from(creds).toString("base64");

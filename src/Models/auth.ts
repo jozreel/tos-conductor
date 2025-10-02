@@ -1,6 +1,7 @@
 export type TokenRequest = {
     client_id: string,
     code: string,
-    loginid: string,
-    cred_type: string
+    loginid?: string,
+    cred_type?: string,
+    offline_access?: boolean
 }

@@ -4,6 +4,7 @@ import { AppRequest } from "../types";
 import {default as UserModel} from '../Models/user'
 import AuthService from "../Drivers/auth-service";
 import SessionDb from "../Db/sessiondb";
+import { GetAccessTokens } from "../load-auth";
 
 class User {
     private userdb: UserDb;
@@ -19,33 +20,16 @@ class User {
     public async AddUser(req: AppRequest) {
         try {
             const data =  req.data;
-
+            const {accessToken} =  await GetAccessTokens();
+        
             const exist  = await this.userdb.GetUserByUsername(data.username);
-            const creds: string =  req.credentials || '';
-            const parts= creds.split(' ');
-            const client_session = await this.sessiondb.GetSessionForUser(process.env.CLIENT_ID||'');
-            try {
-                const tkd =  await this.authservice.VerifyToken(client_session?.Token);
-
-            } catch (ex:any) {
-                if(ex.name === 'TokenExpiredError') {
-                    const tk =  await this.authservice.RefreshToken({
-                        client_id: process.env.AUTH_CLIENT_ID,
-                        token: client_session?.RefreshToken
-                    });
-
-                    
-                }
-
-            }
-            if(parts.length !== 2) {
-                throw new AccessDeniedError('Invalid credentials');
-            }
+           
+            
             const authuser =  await this.authservice.AddUser({
                 username: data.username,
                 email: data.email,
                 password: data.password,
-            }, parts[1]);
+            },  accessToken);
             if(!authuser) {
                 throw new RecordNotFoundError('Could not add user');
             }
@@ -64,6 +48,7 @@ class User {
 
 
         } catch(ex) {
+            console.log(ex);
             throw ex;
         }
     }
