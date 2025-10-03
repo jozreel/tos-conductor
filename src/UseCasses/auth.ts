@@ -14,18 +14,30 @@ class Auth {
         try {
 
             const {data} =  req;
+            
             data.client_id = process.env.AUTH_CLIENT_ID;
             const res =  await this._authservice.GetToken(data);
+            
             const refresh_token =  res.refresh.token;
-            const pload: any =  await this._authservice.VerifyToken(refresh_token);
+            const pload: any =  await this._authservice.VerifyToken(res.id.token);
             const cdate =  new Date();
-            const session = new Session(pload.session, refresh_token, pload.sub, cdate, cdate);
+            const session = new Session(data.loginid, refresh_token, pload.sub, cdate, cdate);
           
             await this._sessiondb.AddSession(session);
             
             const cookies = [
                 {name: "refresh_session_cookie",
                     value: res.refresh.token,
+                    options: {
+                        httpOnly: true, // This is the crucial part
+                        secure: process.env.NODE_ENV === 'production', 
+                        maxAge: res.refresh.valid_until * 1000,
+                        sameSite: 'Lax', 
+                        path: '/' 
+                    }
+                },
+                {name: "sessionid",
+                    value: data.loginid,
                     options: {
                         httpOnly: true, // This is the crucial part
                         secure: process.env.NODE_ENV === 'production', 
@@ -49,12 +61,24 @@ class Auth {
         
             const req_cookies = req.cookies;
             const token  = req_cookies.refresh_session_cookie;
+            const sessionid =  req_cookies.sessionid;
             const data = req.data;
             data.token = token;
+            data.sessionid =  sessionid;
             const res =  await this._authservice.RefreshToken(data);
             const cookies = [
                 {name: "refresh_session_cookie",
                     value: res.refresh.token,
+                    options: {
+                        httpOnly: true, // This is the crucial part
+                        secure: process.env.NODE_ENV === 'production', 
+                        maxAge: res.refresh.valid_until * 1000,
+                        sameSite: 'Lax', 
+                        path: '/' 
+                    }
+                },
+                {name: "sessionid",
+                    value: res.session,
                     options: {
                         httpOnly: true, // This is the crucial part
                         secure: process.env.NODE_ENV === 'production', 
@@ -77,8 +101,15 @@ class Auth {
     public async Logout(req: any) {
         try {
             console.log('loging out user')
+
             const data = req.data;
+            const token  = req.cookies.refresh_session_cookie;
+            const sessionid =  req.cookies.sessionid;
             let res;
+            if(!data.sessionid) {
+                data.sessionid = sessionid;
+            }
+            data.token =  token;
             await this._sessiondb.DelleteSession(data.sessionid);
             res = await this._authservice.Logout(data);
             
@@ -87,7 +118,7 @@ class Auth {
                 {name: 'refresh_session_cookie', options: {
                     path: '/'
                 }}, {
-                    name: 'refresh_expiry',
+                    name: 'sessionid',
                     options: {path: '/'}
                 }];
             
@@ -109,12 +140,13 @@ class Auth {
             const userid =  req.params.userid;
             const creds =  req.credentials;
             const token =  req.cookies.refresh_session_cookie;
+            const sessionid =  req.cookies.sessionid;
             let access_token;
             if(creds) {
                 const cp =  creds.split(' ');
                 access_token = cp.length === 2 ?  cp[1] : '';
             }
-            const res = await this._authservice.UserUnfoGet({userid, token, access_token});
+            const res = await this._authservice.UserUnfoGet({userid, token, access_token, sessionid});
             return res;
         } catch(ex) {
             console.log(ex);
@@ -128,12 +160,13 @@ class Auth {
             const userid =  req.data.userid;
             const creds =  req.credentials;
             const token =  req.cookies.refresh_session_cookie;
+            const sessionid =  req.cookies.sessionid;
             let access_token;
             if(creds) {
                 const cp =  creds.split(' ');
                 access_token = cp.length === 2 ?  cp[1] : '';
             }
-            const res = await this._authservice.UserUnfoPost({userid, token, access_token});
+            const res = await this._authservice.UserUnfoPost({userid, token, access_token, sessionid});
             return res;
         } catch(ex) {
             console.log(ex);

@@ -13,7 +13,7 @@ class AuthService  {
             params.append("grant_type", "authorization_code");
             const creds =  `${process.env.AUTH_CLIENT_ID}:${process.env.CLIENT_SECRET}`;
             const b64Creds =  Buffer.from(creds).toString("base64"); 
-            console.log(this._authUURL)
+          
             const res =  await fetch(`${this._authUURL}/api/token`, {
                 body: params,
                 method: 'POST',
@@ -69,7 +69,7 @@ class AuthService  {
         try {
             const cookiename = 'refresh_session_cookie';
             const cookievalue =  refreshdata.token;
-            const cookie =  `${cookiename}=${cookievalue}`;
+            const cookie =  `${cookiename}=${cookievalue}; sessionid=${refreshdata.sessionid}`;
             const params_data:any = {
                 grant_type: 'refresh_token',
                 sessionid: refreshdata.sessionid,
@@ -106,7 +106,7 @@ class AuthService  {
             const cookiename = 'refresh_session_cookie';
             const cookievalue =  data.token;
             data.client_id =  process.env.AUTH_CLIENT_ID;
-            const cookie =  `${cookiename}=${cookievalue}`;
+            const cookie =  `${cookiename}=${cookievalue}; sessionid=${data.sessionid}`;
             const params =  new URLSearchParams({...data});
             
             const res = await fetch(`${this._authUURL}/api/authorize/logout`, {
@@ -160,7 +160,7 @@ class AuthService  {
         try {
             const cookiename = 'refresh_session_cookie';
             const cookievalue =  data.token;
-            const cookie =  `${cookiename}=${cookievalue}`;
+            const cookie =  `${cookiename}=${cookievalue}; sessionid=${data.sessionid}`;
             const res = await fetch(`${this._authUURL}/api/userinfo/`+data.userid, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -183,7 +183,8 @@ class AuthService  {
         try {
             const cookiename = 'refresh_session_cookie';
             const cookievalue =  data.token;
-            const cookie =  `${cookiename}=${cookievalue}`;
+            const cookie =  `${cookiename}=${cookievalue}; sessionid=${data.sessionid}`;
+          
             const res = await fetch(`${this._authUURL}/api/userinfo`, {
                 method: 'POST',
                 body: JSON.stringify({userid: data.userid}),
